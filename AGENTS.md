@@ -87,6 +87,6 @@ npm 上的已发布版本**不能删除、不能覆盖**。发错了只能发下
 ## 9. `repository` 大小写与 LICENSE 署名
 
 [package.json](./package.json):47 的 `repository.url` 必须**字符级**等于 GitHub 实际仓库 `Mr-cjf/dsh-status-anim`（**注意大写 M**）：owner/repo 大小写敏感，写错一个字母 provenance 就报 `E422`。
-LICENSE 版权人当前写的是 `14023`，与 GitHub 账号 `Mr-cjf` 不一致——**只提示，不擅自改 LICENSE**，发版前由发版负责人确认是否统一署名。
+LICENSE 版权人与 GitHub 账号一致，均为 `Mr-cjf`（`Copyright (c) 2026 Mr-cjf`）；后续若更换账号或组织，LICENSE 署名须与 `repository.url` 的 owner 保持一致。
 
 **违反后果**：`repository.url` 大小写不符 → 发布时 provenance 校验 `E422` 失败，包已上传但 provenance 缺失，只能发下一版补救。
