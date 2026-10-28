@@ -80,6 +80,10 @@ npm 上的已发布版本**不能删除、不能覆盖**。发错了只能发下
 - 发布后验证必须做全套三步（`npm view` → `npm pack` 解包 grep 关键符号 → 装到**隔离 profile** 实测动画与设置面板），细则见指南第 5 章。
 - **违反后果**：只看到 CI 绿就宣布完成，等于没验证；`lib/` 缺符号或 client 载体格式坏了，用户侧静默失效。
 
+- 推送含 `.github/workflows/` 的提交前，先确认 gh token 有 `workflow` scope（`gh auth show` 或 `gh auth refresh -s workflow`），否则改 SSH 远端推送（`git remote set-url origin git@github.com:<owner>/<repo>.git`）。
+- Action 版本不得凭记忆写 `@v4`：必须用 `gh api repos/actions/<name>/releases/latest --jq .tag_name` 探测实测（`checkout` / `setup-node` 当前均为 `v7`），并验 `refs/tags/v7` 存在。
+- **违反后果**：缺 scope 直接推不上去（workflow 文件被 GitHub 拒收）；写错 Action 版本会踩 `setup-node` v4–v6 假 token 破坏 OIDC 的坑，CI 认证失败。
+
 ## 9. `repository` 大小写与 LICENSE 署名
 
 [package.json](./package.json):47 的 `repository.url` 必须**字符级**等于 GitHub 实际仓库 `Mr-cjf/dsh-status-anim`（**注意大写 M**）：owner/repo 大小写敏感，写错一个字母 provenance 就报 `E422`。

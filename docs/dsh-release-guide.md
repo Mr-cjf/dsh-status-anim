@@ -307,3 +307,5 @@ registry 传播延迟约 **2–2.5 分钟**（前身实测 0.10.1≈2min、0.10.
 | `repository.url` 大小写不符 | `npm publish` 报 `E422` | 与 GitHub 仓库字符级一致（本项目 repository 待定） |
 | CHANGELOG 记了未发布的内容 | 文档与实物不符 | 只记实际发出去的内容；且**无 CI 校验，纯人工把关** |
 | workflow 放在子包目录 | CI 永不触发 | 只放仓库根 `.github/workflows/publish.yml` |
+| `gh` token 缺 `workflow` scope | HTTPS `git push` 含 `.github/workflows/*.yml` 被拒（`refusing to allow an OAuth App to create or update workflow` / `remote rejected`） | 成因：gh OAuth token scopes 只有 `gist, read:org, repo`。① `gh auth refresh -s workflow`（需交互授权）；② 改 SSH 推送：`git remote set-url origin git@github.com:<owner>/<repo>.git`。换机器/密钥失效后 HTTPS 仍会失败，根治仍要补 scope |
+| Action 版本凭记忆写 `@v4` | 错过 `setup-node` v7 的修复——v4–v6 会用假 token 污染 `.npmrc` 破坏 OIDC；`checkout`/`setup-node` 当前主版本均已是 `v7` | 写 workflow 前探测：`gh api repos/actions/<name>/releases/latest --jq .tag_name`，并验证浮动主版本 tag 存在：`gh api repos/actions/<name>/git/refs/tags/v7` |
