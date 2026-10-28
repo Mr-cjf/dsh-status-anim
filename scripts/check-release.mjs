@@ -197,7 +197,199 @@ check('lib/index.js 与 lib/client.js 存在、>1KB、node --check 通过', () =
   return okList.join('；');
 });
 
-// ---------------------------------------------------------------- 6. cordis patch 挂载
+// ------------------------------------------- 6. 孤儿调用检测（被调用但文件内无定义）
+/** 已知全局/内置函数白名单：这些名字在 lib 内被调用但没有本地定义是正常的。 */
+const GLOBAL_CALL_WHITELIST = new Set([
+  'require', 'fetch', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
+  'JSON', 'Object', 'Array', 'String', 'Number', 'Boolean', 'Math', 'Date',
+  'Promise', 'Map', 'Set', 'RegExp', 'Error', 'parseInt', 'parseFloat', 'isNaN',
+  'encodeURIComponent', 'decodeURIComponent', 'structuredClone', 'queueMicrotask',
+  // 关键字与语句头（正则会把 `if (`、`switch (` 这类也抓成 NAME( 形式）
+  'if', 'for', 'while', 'switch', 'catch', 'function', 'return', 'typeof',
+  'do', 'else', 'try', 'with', 'await', 'yield', 'new', 'delete', 'void',
+  'instanceof', 'throw', 'finally', 'in', 'of', 'case', 'constructor',
+  // 宿主环境全局
+  'window', 'document', 'console', 'navigator', 'globalThis', 'Symbol',
+  'URL', 'Blob', 'TextDecoder', 'TextEncoder', 'atob', 'btoa', 'arguments',
+  'MutationObserver', 'ResizeObserver', 'IntersectionObserver', 'requestAnimationFrame',
+  'cancelAnimationFrame', 'performance', 'Image', 'FileReader', 'AbortController',
+]);
+
+/** 把字符串字面量与注释等长替换为空格，保留换行，从而保留原始行号。 */
+function blankLiteralsAndComments(src) {
+  const chars = [...src];
+  const n = chars.length;
+  let i = 0;
+  const blank = (x) => (x === '\n' || x === '\r' ? x : ' ');
+  while (i < n) {
+    const c = chars[i];
+    const c2 = chars[i + 1];
+    if (c === '/' && c2 === '/') {
+      while (i < n && chars[i] !== '\n') {
+        chars[i] = blank(chars[i]);
+        i++;
+      }
+      continue;
+    }
+    if (c === '/' && c2 === '*') {
+      chars[i] = ' ';
+      chars[i + 1] = ' ';
+      i += 2;
+      while (i < n && !(chars[i] === '*' && chars[i + 1] === '/')) {
+        chars[i] = blank(chars[i]);
+        i++;
+      }
+      if (i < n) {
+        chars[i] = ' ';
+        chars[i + 1] = ' ';
+        i += 2;
+      }
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      chars[i] = ' ';
+      i++;
+      while (i < n) {
+        if (chars[i] === '\\') {
+          chars[i] = ' ';
+          if (i + 1 < n) chars[i + 1] = blank(chars[i + 1]);
+          i += 2;
+          continue;
+        }
+        if (chars[i] === quote) {
+          chars[i] = ' ';
+          i++;
+          break;
+        }
+        chars[i] = blank(chars[i]);
+        i++;
+      }
+      continue;
+    }
+    i++;
+  }
+  return chars.join('');
+}
+
+/** 收集定义名：`function NAME(`、`async function NAME(`、`var NAME = function`、`NAME: function`。 */
+function collectDefinitions(src) {
+  const defs = new Set();
+  const patterns = [
+    /(?:^|[^.\w$])function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/g,
+    /(?:^|[^.\w$])(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?function\b/g,
+    /(?:^|[^.\w$])(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/g,
+    /(?:^|[^.\w$])([A-Za-z_$][\w$]*)\s*:\s*(?:async\s*)?function\b/g,
+    /(?:^|[^.\w$])([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/g,
+  ];
+  for (const re of patterns) {
+    let m;
+    while ((m = re.exec(src)) !== null) defs.add(m[1]);
+  }
+  // class 声明同样引入可调用绑定（new NAME()）
+  const classRe = /(?:^|[^.\w$])class\s+([A-Za-z_$][\w$]*)/g;
+  let cm;
+  while ((cm = classRe.exec(src)) !== null) defs.add(cm[1]);
+  // import 语句引入的绑定：默认导入 / * as ns / { a, b as c }
+  const importRe = /(?:^|\n)\s*import\s+([\s\S]*?)\s+from\s/g;
+  let im;
+  while ((im = importRe.exec(src)) !== null) {
+    const clause = im[1];
+    const brace = clause.match(/\{([\s\S]*?)\}/);
+    const outside = clause.replace(/\{[\s\S]*?\}/g, ' ');
+    for (const part of outside.split(',')) {
+      const t = part.trim().replace(/^\*\s*as\s+/, '');
+      if (/^[A-Za-z_$][\w$]*$/.test(t)) defs.add(t);
+    }
+    if (brace) {
+      for (const item of brace[1].split(',')) {
+        const t = item.trim();
+        const alias = t.match(/\bas\s+([A-Za-z_$][\w$]*)$/);
+        if (alias) defs.add(alias[1]);
+        else if (/^[A-Za-z_$][\w$]*$/.test(t)) defs.add(t);
+      }
+    }
+  }
+  // 解构与普通绑定：const { a, b: c } = ... / const NAME = ...
+  const destructRe = /(?:^|[^.\w$])(?:var|let|const)\s*\{([^}]*)\}\s*=/g;
+  let dm;
+  while ((dm = destructRe.exec(src)) !== null) {
+    for (const item of dm[1].split(',')) {
+      const t = item.trim();
+      if (!t || t.startsWith('...')) continue;
+      const alias = t.match(/^[A-Za-z_$][\w$]*\s*:\s*([A-Za-z_$][\w$]*)$/);
+      if (alias) defs.add(alias[1]);
+      else if (/^[A-Za-z_$][\w$]*$/.test(t)) defs.add(t);
+    }
+  }
+  const bindingRe = /(?:^|[^.\w$])(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=[^=]/g;
+  let bm;
+  while ((bm = bindingRe.exec(src)) !== null) defs.add(bm[1]);
+  // 形参与 catch 绑定
+  const paramRe = /\(\s*(?:async\s*)?(?:[^()]*?)\)\s*(?:=>|\{)/g;
+  let pm;
+  while ((pm = paramRe.exec(src)) !== null) {
+    const inner = pm[0].slice(1, pm[0].lastIndexOf(')'));
+    for (const part of inner.split(',')) {
+      const t = part.trim().replace(/^\.\.\./, '').split(/[=:]/)[0].trim();
+      if (/^[A-Za-z_$][\w$]*$/.test(t)) defs.add(t);
+    }
+  }
+  const catchRe = /\bcatch\s*\(\s*([A-Za-z_$][\w$]*)/g;
+  let km;
+  while ((km = catchRe.exec(src)) !== null) defs.add(km[1]);
+  return defs;
+}
+
+/** 收集调用名：`NAME(`，排除属性访问 `obj.NAME(`。 */
+function collectCalls(src) {
+  const calls = new Map(); // name -> 首个行号
+  const lineStarts = [0];
+  for (let i = 0; i < src.length; i++) if (src[i] === '\n') lineStarts.push(i + 1);
+  const lineOf = (idx) => {
+    let lo = 0;
+    let hi = lineStarts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (lineStarts[mid] <= idx) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo + 1;
+  };
+  const re = /(?<![.\w$])([A-Za-z_$][\w$]*)\s*\(/g;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const name = m[1];
+    if (!calls.has(name)) calls.set(name, lineOf(m.index));
+  }
+  return calls;
+}
+
+check('lib/index.js 与 lib/client.js 无孤儿调用（被调用但文件内无定义的符号）', () => {
+  const problems = [];
+  const okList = [];
+  for (const rel of LIB_TARGETS) {
+    if (!existsSync(abs(rel))) {
+      problems.push(`${rel} 不存在，无法做孤儿调用检测`);
+      continue;
+    }
+    const src = blankLiteralsAndComments(readText(rel));
+    const defs = collectDefinitions(src);
+    const calls = collectCalls(src);
+    const orphans = [];
+    for (const [name, line] of calls) {
+      if (defs.has(name)) continue;
+      if (GLOBAL_CALL_WHITELIST.has(name)) continue;
+      orphans.push(`${rel}:${line} 调用了未定义符号 ${name}()`);
+    }
+    if (orphans.length > 0) problems.push(...orphans);
+    else okList.push(`${rel}（定义 ${defs.size} 个，调用点检查通过）`);
+  }
+  if (problems.length > 0) throw new Error(problems.slice(0, 5).join('；'));
+  return okList.join('；');
+});
+
+// ---------------------------------------------------------------- 7. cordis patch 挂载
 check('cordis.patch.yml 存在、含 status-anim 挂载行、路径等于 dsh.bundle.patch', () => {
   const patchPath = pkg?.dsh?.bundle?.patch;
   if (typeof patchPath !== 'string' || !patchPath.trim()) {
