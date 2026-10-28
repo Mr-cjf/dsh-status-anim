@@ -1,0 +1,58 @@
+{
+  "gate": {
+    "dsu": 1
+  },
+  "sessions": [
+    {
+      "tag": "SPAN",
+      "cls": "wnFoaW_title",
+      "txt": "安装 dsh-notify-tray 插件",
+      "x": 40,
+      "y": 772,
+      "w": 188,
+      "h": 20
+    },
+    {
+      "tag": "SPAN",
+      "cls": "_root_38jqx_3",
+      "txt": "PowerShell 静默安装 MSI43分钟",
+      "x": 12,
+      "y": 800,
+      "w": 257,
+      "h": 32
+    },
+    {
+      "tag": "SPAN",
+      "cls": "wnFoaW_title",
+      "txt": "PowerShell 静默安装 MSI",
+      "x": 40,
+      "y": 806,
+      "w": 183,
+      "h": 20
+    },
+    {
+      "tag": "SPAN",
+      "cls": "_root_38jqx_3",
+      "txt": "dsh桌面版GUI工作树会话搜索6天",
+      "x": 12,
+      "y": 834,
+      "w": 257,
+      "h": 32
+    },
+    {
+      "tag": "SPAN",
+      "cls": "wnFoaW_title",
+      "txt": "dsh桌面版GUI工作树会话搜索",
+      "x": 40,
+      "y": 840,
+      "w": 198,
+      "h": 20
+    }
+  ],
+  "after": {
+    "live": 0,
+    "status": 0,
+    "url": "http://127.0.0.1:54109/",
+    "tail": "\nCONFIRM IDENTITY\n按 Enter / Space，或点击按钮继续\nREV 0.1.0 · WEB PROFILE\n16:59:12\nSKIP ▸\nPOWERED BY DEEPSEEK\n核对身份资料…\nMATCHING OPERATOR RECORD\n新会话\nCtrl\n+\nAlt\n+\nN\n插件\n插件市场\n自动化任务\n上下文洞察\nJet Hub\n更多\n工作区\nbackend\ndsh-material-analysis-failed\nvoice-input-timbre-clone\nsub-mirror-group\ncohub\nopencode\ndsh\n新会话\n进行中\n1 个子智能体运行中\n安装 dsh-notify-tray 插件\n3分钟\nPowerShell 静默安装 MSI\n43分钟\ndsh桌面版GUI工作树会话搜索\n6天\n配置正确性确认\n7天\n若变 -live\n探索未至之境\n预览版\ndsh\nCoHub 调度者（co-orchestrator）\n描述你想要构建的内容, / 调用指令, @ 文件或对话\n完全权限\ndeepseek-v4.1-flash\nMax\n黛蓝\n⚙"
+  }
+}

@@ -1,0 +1,9 @@
+# dsh-status-anim bundle patch —— 在 profile 组合中挂载本插件行。
+#
+# 行 id 为 "status-anim"，profile 级 cordis.patch.yml 可用同 id 覆盖/禁用。
+# host 半边只声明一个依赖：webServer（前缀路由 /status-anim）。
+# client 半边 inject 为空数组：rc.3 里 settingsScope 不存在（实际叫 configForms），
+# 本插件纯 DOM 操作，不需要任何客户端服务，零依赖最稳。
+- insert:
+    - id: status-anim
+      name: 'dsh-status-anim'

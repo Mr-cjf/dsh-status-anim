@@ -1,0 +1,116 @@
+# dsh-status-anim 发布流水线（npm OIDC Trusted Publisher + provenance）
+#
+# 为什么只有 push tag 触发（AGENTS.md 第 7 条）：
+#   版本一致性校验步骤带 `if: startsWith(github.ref, 'refs/tags/')`，只有 tag 触发时该条件才成立。
+#   若开手动触发，该步骤会被整段跳过，等于零校验把 package.json#version 直接发出去，
+#   而 npm 已发布版本不可删不可覆盖，发错只能发下一版补救。所以触发方式只有 tags: ['dsh-v*']。
+#
+# 为什么 checkout 必须显式带 ref: ${{ github.ref }}（AGENTS.md 第 4 条）：
+#   不带 ref 时 actions/checkout 在 tag 事件上取的是 tag 指向的 commit，看起来一样，
+#   但一旦 tag 与远程 HEAD 脱节（tag 早打完又补了提交），打出来的包就缺改动，CI 依然 success —— 发布残缺且不可修复。
+#   显式钉住 github.ref 表达「就发这个 tag 指向的 commit」，配合发版流程里「先 push 再核远程 HEAD 后打 tag」形成双保险。
+#
+# 为什么两个 Action 都用 @v7：actions/checkout v7 是当前主版本（最新 v7.0.1，浮动 tag refs/tags/v7 已验证存在）；
+#   actions/setup-node v7 同理（最新 v7.1.0）。setup-node v4–v6 存在「写入假 token 污染 .npmrc」的缺陷，
+#   会干扰 OIDC / Trusted Publisher 认证，因此不用 @v4/@v5/@v6。
+
+name: publish
+
+on:
+  push:
+    tags: ['dsh-v*']
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # OIDC（npm Trusted Publisher）必需：供 npm 换取短期发布凭证
+      id-token: write
+    steps:
+      - name: checkout（钉住触发本次运行的 tag commit）
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+
+      - name: setup-node（Node 24 + npm registry）
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: 校验 npm 版本（OIDC Trusted Publisher 需 npm >= 11.5.1）
+        shell: bash
+        run: |
+          set -euo pipefail
+          NPM_VERSION="$(npm -v)"
+          echo "当前 npm 版本：${NPM_VERSION}"
+          # Node 24 自带的 npm 已满足 >= 11.5.1，正常情况不会进入升级分支；
+          # 此处仅作兜底，避免 runner 镜像里 npm 过旧导致 OIDC 换 token 失败。
+          LOWEST="$(printf '%s\n11.5.1\n' "${NPM_VERSION}" | sort -V | head -n 1)"
+          if [ "${LOWEST}" != "11.5.1" ]; then
+            echo "npm ${NPM_VERSION} < 11.5.1，升级到 latest 后重试发布"
+            npm i -g npm@latest
+            npm -v
+          else
+            echo "npm 版本满足 OIDC 要求（>= 11.5.1）"
+          fi
+
+      - name: 版本一致性校验（tag 版本 == package.json version）
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#dsh-v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "tag 版本：${TAG_VERSION}"
+          echo "package.json 版本：${PKG_VERSION}"
+          if [ "${TAG_VERSION}" != "${PKG_VERSION}" ]; then
+            echo "::error::tag 版本 ${TAG_VERSION} 与 package.json 版本 ${PKG_VERSION} 不一致，终止发布"
+            exit 1
+          fi
+          echo "VERSION=${PKG_VERSION}" >> "${GITHUB_ENV}"
+          echo "版本校验通过：${PKG_VERSION}"
+
+      - name: 安装依赖（无外部依赖，锁文件只含根条目）
+        shell: bash
+        # --no-audit --no-fund 只影响输出噪音；本项目无 dependencies/devDependencies，
+        # peer @deepseek-ai/cordis 为 optional，npm ci 只校验 package-lock.json 与 package.json 是否同步。
+        run: npm ci --no-audit --no-fund
+
+      - name: 发布门禁（AGENTS.md 第 8 条统一入口）
+        shell: bash
+        run: npm run check:release
+
+      - name: 发布到 npm（provenance + OIDC）
+        shell: bash
+        env:
+          # TP（Trusted Publisher）在 npm 侧配好并跑通 OIDC 后，此 token 可以不再需要；
+          # 现在保留作为回退路径，避免 OIDC 未就绪时整条流水线无法发布。
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
+
+      - name: 发布后核验（registry 上的版本与 tarball）
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG_NAME="$(node -p "require('./package.json').name")"
+          echo "核验 ${PKG_NAME}@${VERSION}"
+          PUBLISHED_VERSION="$(npm view "${PKG_NAME}@${VERSION}" version)"
+          echo "registry version: ${PUBLISHED_VERSION}"
+          echo "registry dist.tarball: $(npm view "${PKG_NAME}@${VERSION}" dist.tarball)"
+          if [ "${PUBLISHED_VERSION}" != "${VERSION}" ]; then
+            echo "::error::registry 上的版本 ${PUBLISHED_VERSION} 与预期 ${VERSION} 不一致"
+            exit 1
+          fi

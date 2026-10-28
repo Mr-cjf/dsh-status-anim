@@ -1,0 +1,164 @@
+{
+  "bootTrail": [
+    {
+      "t": 5,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": false
+    },
+    {
+      "t": 10,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 15,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 20,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 25,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 30,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 35,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 40,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 45,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 50,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 55,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 60,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 65,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    },
+    {
+      "t": 70,
+      "dsu": true,
+      "dsuZ": "2147483000",
+      "dsuOp": "1",
+      "dsuVis": "visible",
+      "dsuDisplay": "block",
+      "step": "[ 01 / 06 ]",
+      "composer": true
+    }
+  ],
+  "dsuGoneBeforeRemove": false,
+  "removed": 1,
+  "visible": {
+    "found": true,
+    "src": "/status-anim/file/diving.gif?t=1793176397406",
+    "rect": {
+      "x": 62,
+      "y": 319.21875,
+      "w": 18,
+      "h": 18
+    },
+    "hitIsImg": false,
+    "hitTag": "DIV.",
+    "natural": "72x72",
+    "diff01": 0,
+    "diff12": 0,
+    "animated": false
+  },
+  "shotVisible": "verify-6-no-overlay.png",
+  "shotFinal": "verify-7-final-full.png"
+}

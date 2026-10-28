@@ -1,0 +1,71 @@
+{
+  "boot": {
+    "inGraph": true,
+    "gears": 1,
+    "deployedHasPreview": 0
+  },
+  "build": {
+    "html": "<div class=\"V4vHZW_running\" data-chat-running=\"\"><span class=\"BpRApG_visuallyHidden\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\">深度求索中</span><span class=\"V4vHZW_runningDivider\" aria-hidden=\"true\"></span><span class=\"V4vHZW_runningContent\"><span class=\"V4vHZW_runningIcon\"></span><span class=\"V4vHZW_runningText\">深度求索中，用时 52 秒 ···</span></span></div>"
+  },
+  "oldBehaviour": {
+    "imgInHiddenSpan": 0,
+    "imgInRunningContent": 1,
+    "hiddenSpanRect": [
+      1,
+      1
+    ],
+    "note": "imgInHiddenSpan>0 且 rect=1x1 → 旧实例确实插进了不可见的 1px span"
+  },
+  "inject": {
+    "exports": [
+      "apply",
+      "inject",
+      "__internals"
+    ],
+    "hasInternals": true,
+    "applied": true
+  },
+  "result": {
+    "imgCountInRunningContent": 1,
+    "imgCountInHost": 1,
+    "imgCountInHiddenSpan": 0,
+    "src": "/status-anim/file/diving.gif?t=1793178329958",
+    "size": [
+      "30px",
+      "30px"
+    ],
+    "natural": [
+      72,
+      72
+    ],
+    "rect": [
+      114,
+      440,
+      30,
+      30
+    ],
+    "textRect": [
+      176,
+      444
+    ],
+    "isFirstChildOfContent": true,
+    "hostHtml": "<div class=\"V4vHZW_running\" data-chat-running=\"\"><span class=\"BpRApG_visuallyHidden\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\">深度求索中</span><span class=\"V4vHZW_runningDivider\" aria-hidden=\"true\"></span><span class=\"V4vHZW_runningContent\"><img data-status-anim=\"1\" alt=\"\" aria-hidden=\"true\" draggable=\"false\" data-status-anim-name=\"diving.gif\" src=\"/status-anim/file/diving.gif?t=1793178329958\" style=\"width: 30px; height: 30px; object-fit: contain; vertical-align: middle; flex: 0 0 auto; margin-right: 6px; display: inline-block; pointer-events: none; user-select: none;\"><span class=\"V4vHZW_runningIcon\"></span><span class=\"V4vHZW_runningText\">深度求索中，用时 52 秒 ···</span></span></div>"
+  },
+  "idem": {
+    "count": 1
+  },
+  "panel": {
+    "panel": true,
+    "gears": 2,
+    "previewImg": {
+      "src": "/status-anim/file/diving.gif?t=1793178341802",
+      "w": "64px",
+      "h": "64px"
+    },
+    "afterSlider": {
+      "w": "64px",
+      "h": "64px"
+    },
+    "hasCaption": true
+  }
+}

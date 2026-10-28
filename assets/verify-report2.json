@@ -1,0 +1,84 @@
+{
+  "trail": [
+    {
+      "t": 4018,
+      "gear": true,
+      "composer": false,
+      "boot": false,
+      "txt": "深度求索 DEEPSEEK DEEPSEEK HARNESS DEEPSEEK SYNTHESIZE INTELLIGENCE HARNES"
+    },
+    {
+      "t": 8036,
+      "gear": true,
+      "composer": true,
+      "boot": false,
+      "txt": "DEEPSEEK SYNTHESIZE INTELLIGENCE HARNESS OS [ 01 / 06 ] AUTHORIZATION "
+    }
+  ],
+  "overlays": [
+    {
+      "tag": "DIV",
+      "cls": "dsu-root",
+      "z": "2147483000",
+      "op": "1",
+      "cover": 1296000
+    },
+    {
+      "tag": "DIV",
+      "cls": "dsu-plate",
+      "z": "auto",
+      "op": "1",
+      "cover": 1296000
+    },
+    {
+      "tag": "DIV",
+      "cls": "dsu-vignette dsu-in",
+      "z": "13",
+      "op": "1",
+      "cover": 1296000
+    },
+    {
+      "tag": "DIV",
+      "cls": "dsu-watermark",
+      "z": "auto",
+      "op": "1",
+      "cover": 1296000
+    },
+    {
+      "tag": "DIV",
+      "cls": "dsu-grain",
+      "z": "auto",
+      "op": "0.05",
+      "cover": 5184000
+    },
+    {
+      "tag": "DIV",
+      "cls": "dsu-wash",
+      "z": "35",
+      "op": "0",
+      "cover": 1296000
+    }
+  ],
+  "occlusion": {
+    "imgFound": true,
+    "src": "/status-anim/file/diving.gif?t=1793176288860",
+    "rect": {
+      "x": 62,
+      "y": 419.21875,
+      "w": 18,
+      "h": 18
+    },
+    "hitChain": [
+      "DIV.dsu-plate",
+      "DIV.dsu-root",
+      "BODY"
+    ],
+    "covered": true
+  },
+  "gifFrames": {
+    "distinctHashes": 1,
+    "src": "/status-anim/file/diving.gif?t=1793176288860",
+    "natural": "72x72"
+  },
+  "shot5": "verify-5-mainstate.png"
+}

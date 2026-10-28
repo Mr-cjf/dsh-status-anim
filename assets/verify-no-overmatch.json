@@ -1,0 +1,49 @@
+{
+  "baseline": {
+    "sidebar": 1,
+    "aside": 0,
+    "nav": 1,
+    "roleStatus": 0,
+    "ariaLive": 0,
+    "chatRunning": 0,
+    "chatFlow": 0,
+    "totalImg": 0,
+    "sidebarImg": 0,
+    "asideImg": 0,
+    "navImg": 0
+  },
+  "seed": {
+    "seededInto": "DIV."
+  },
+  "legit": {
+    "inRow": 1,
+    "inContent": 1,
+    "allCount": 1
+  },
+  "final": {
+    "stateImgTotal": 1,
+    "allImgTotal": 1,
+    "sidebarImg": 0,
+    "asideNavImg": 0,
+    "detail": [
+      {
+        "src": "/status-anim/file/whale_preview_work.gif?t=1793178964323",
+        "w": "18px",
+        "rect": {
+          "x": 0,
+          "y": 902,
+          "w": 18,
+          "h": 18
+        },
+        "chain": [
+          "IMG",
+          "SPAN.V4vHZW_runningContent",
+          "DIV#sa-verify-row.V4vHZW_running",
+          "DIV#sa-verify-flow.V4vHZW_column",
+          "BODY",
+          "HTML.dsu-lock.dsh-cw-light"
+        ]
+      }
+    ]
+  }
+}
