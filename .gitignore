@@ -2,5 +2,6 @@ node_modules/
 .cdp-profile/
 .cdp-profile-verify/
 .tmp-frames/
+.tmp-probe/
 *.log
 .DS_Store

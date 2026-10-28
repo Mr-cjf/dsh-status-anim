@@ -12,7 +12,7 @@
 ### 新增
 
 - **状态条动图插播**：在 DSH Web GUI 的「Deep diving...」状态提示条上插入用户自定义图片。用 `MutationObserver` 盯住 `[data-chat-flow] [role="status"][aria-live="polite"]` 并 `prepend(<img>)`，另带轮询兜底，宿主 DOM 结构变化后仍能命中。
-- **放文件即换图，零重建零重启**：把 `.gif` / `.apng` / `.webp` / `.png` / `.avif` 丢进 `~/.dsh/status-anim/`（Windows：`C:\Users\14023\.dsh\status-anim\`），刷新页面即可看到；删旧放新即完成替换，不需要构建、不需要重启 `dsh web`。同名覆盖也能立刻生效（响应带 `Cache-Control: no-store`，`src` 附时间戳）。
+- **放文件即换图，零重建零重启**：把 `.apng` / `.png` / `.webp` 丢进 `~/.dsh/status-anim/`（Windows：`C:\Users\14023\.dsh\status-anim\`），刷新页面即可看到；删旧放新即完成替换，不需要构建、不需要重启 `dsh web`。同名覆盖也能立刻生效（响应带 `Cache-Control: no-store`，`src` 附时间戳）。
 - **可视化设置面板**：页面右下角半透明 ⚙ 齿轮按钮，点开即为设置卡片，改动即时生效、无需刷新。
   - 启用开关（`dsh-status-anim.enabled`）
   - 尺寸滑块 8–96px（`dsh-status-anim.size`，默认 18）

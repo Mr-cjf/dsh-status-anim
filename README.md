@@ -1,6 +1,6 @@
 # dsh-status-anim
 
-给 DSH Web GUI 的 **「Deep diving...」状态提示条** 加一个你自己的动图（GIF / APNG / WebP / PNG / AVIF）。
+给 DSH Web GUI 的 **「Deep diving...」状态提示条** 加一个你自己的动图（APNG / WebP / PNG）。
 **放文件即换图，零重建、零重启。**
 
 ## 一句话用法
@@ -10,7 +10,7 @@
 
 ```
 ~/.dsh/status-anim/
-  diving.gif
+  diving.webp
   whale.webp
   dots.apng
 ```
@@ -40,7 +40,8 @@
 | `GET /status-anim/file/<name>` | 图片本体，带正确 `Content-Type` |
 | `GET /status-anim/` | 自述 JSON：素材目录绝对路径 + 可用路由（人工排查用） |
 
-允许的扩展名：`.gif` `.apng` `.png` `.webp` `.avif`。
+允许的扩展名：`.apng` `.png` `.webp`。
+**静态图片会被剔除**：只接受真动图——APNG 必须含 `acTL` 块，WebP 必须含 `ANIM` / `ANMF` 块，静态 PNG 一律不收（扩展名只是第一道筛子，真正的判定是按块结构遍历）。
 安全性：`path.resolve` + `startsWith` 目录穿越防护（与 `dsh-host-frontend-static` 同法），并且拒绝以 `.` 开头的文件名和带路径分隔符的名字。
 
 ## 可视化设置面板（齿轮按钮）

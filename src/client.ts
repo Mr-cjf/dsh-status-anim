@@ -23,7 +23,16 @@
  *   任一部署缺服务 → 整条 fiber 不 apply → 动画一起死。故改用自绘面板，`inject: []` 护城河不破。
  */
 
-import type { Context } from '@deepseek-ai/cordis'
+/**
+ * cordis `Context` 的最小结构建模（不在 src/ 内引第三方包类型）。
+ *
+ * `@deepseek-ai/cordis` 是可选 peerDependency，本仓库无 node_modules 时
+ * `import type { Context } from '@deepseek-ai/cordis'` 会让 tsc 直接失败。
+ * 这里只描述真正用到的成员：`effect()`。运行时形态由 cordis fiber 提供。
+ */
+interface CordisContext {
+  effect(fn: () => () => void): void
+}
 
 export const inject: string[] = []
 
@@ -98,6 +107,8 @@ const LIST_URL = '/status-anim/list'
 const FILE_URL = '/status-anim/file/'
 const MARK = 'data-status-anim'
 const UI_MARK = 'data-status-anim-ui'
+/** 图角色属性：`action` 表示动作行图，不归状态条清理逻辑管（lib/client.js:245）。 */
+const ROLE_ATTR = 'data-status-anim-role'
 const DEFAULT_SIZE = 18
 const MIN_SIZE = 8
 const MAX_SIZE = 96
@@ -111,6 +122,39 @@ const KEY_PICKED = 'dsh-status-anim.picked'
 
 /** 「随机」素材的取值（空串 = 由插件随机挑）。 */
 const PICK_RANDOM = ''
+
+/**
+ * 客户端素材扩展名白名单：**与 host 侧的 MIME 表逐项对齐**（`lib/index.js:46-50`）。
+ *
+ * 客户端只能看名字，真动图校验（acTL / ANIM 块）在 host 侧的 `isAnimatedFile()`。
+ * GIF / AVIF 已下线，故不在此表内 —— host/client 版本错配时，这里会把
+ * 旧格式名字先挡掉，避免「名单里带着 .gif → 取图 404 → 空白破图」。
+ */
+const CLIENT_EXTS = ['.apng', '.png', '.webp'] as const
+
+/** 扩展名是否在客户端白名单内（大小写不敏感，要求有点）。 */
+function hasClientExt(name: string): boolean {
+  const lower = name.toLowerCase()
+  for (const ext of CLIENT_EXTS) {
+    if (lower.length > ext.length && lower.slice(-ext.length) === ext) return true
+  }
+  return false
+}
+
+/**
+ * 按 CLIENT_EXTS 过滤素材名单（保持原顺序）。
+ * 两条取名单通道（refreshList 与 fetchNames）必须共用同一过滤器。
+ */
+function sanitizeNames(list: unknown): string[] {
+  if (!Array.isArray(list)) return []
+  const out: string[] = []
+  for (const item of list) {
+    if (typeof item !== 'string' || item.length === 0) continue
+    if (!hasClientExt(item)) continue
+    out.push(item)
+  }
+  return out
+}
 
 function storage(): Storage | undefined {
   try {
@@ -222,7 +266,7 @@ function refreshList(state: State): void {
       return res.json() as Promise<unknown>
     })
     .then((value) => {
-      state.names = Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : []
+      state.names = sanitizeNames(value)
       state.fetchedAt = Date.now()
       // 首次拿到素材后补一轮扫描：否则要等下一次轮询才插图。
       if (state.names.length > 0 && !state.stopped) {
@@ -590,7 +634,7 @@ async function fetchNames(): Promise<string[]> {
     if (!res.ok) return []
     const value: unknown = await res.json()
     if (!Array.isArray(value)) return []
-    return value.filter((item): item is string => typeof item === 'string' && item.length > 0)
+    return sanitizeNames(value)
   } catch {
     return []
   }
@@ -931,7 +975,7 @@ interface ClientCtx {
   effect?: (fn: () => () => void) => void
 }
 
-export function apply(ctx: Context | ClientCtx | undefined): void {
+export function apply(ctx: CordisContext | ClientCtx | undefined): void {
   const anyCtx = ctx as ClientCtx | undefined
   if (anyCtx === undefined || typeof anyCtx.effect !== 'function') {
     // 缺失 effect 时仍尽力工作（不返回清理器），保持零崩溃。

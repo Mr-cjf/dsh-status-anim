@@ -13,6 +13,19 @@
 # 为什么两个 Action 都用 @v7：actions/checkout v7 是当前主版本（最新 v7.0.1，浮动 tag refs/tags/v7 已验证存在）；
 #   actions/setup-node v7 同理（最新 v7.1.0）。setup-node v4–v6 存在「写入假 token 污染 .npmrc」的缺陷，
 #   会干扰 OIDC / Trusted Publisher 认证，因此不用 @v4/@v5/@v6。
+#
+# 为什么不再注入任何 npm 认证 token（曾通过 env 传入仓库 secret）：
+#   npm 判定认证状态看的是 .npmrc 里是否存在 `_authToken` 这一行，而不是它的值。
+#   只要该行存在（setup-node 的 registry-url 也会写入一行占位 token），npm 就认为「已经有凭证」，
+#   于是跳过 OIDC 的 token exchange，直接拿这个空/假 token 去请求 registry，结果是 ENEEDAUTH / E404 / 401，
+#   而报错信息完全看不出「OIDC 被抑制」这个真实原因。本仓库 secrets 实测为空，那个 env 只会把发布打成 401。
+#   正确做法：不注入任何 token，并在 publish 前把 .npmrc 的 authToken 行删掉（保留 registry 行）。
+#
+# 为什么无条件升级 npm（而不是「低于 11.5.1 才升级」）：
+#   OIDC Trusted Publisher 需要 npm >= 11.5.1，而 Node 24.0.0 自带的是 npm 11.0.0
+#   （见 https://nodejs.org/en/blog/release/v24.0.0 ），天然不达标。
+#   更糟的是版本不足时的报错会被伪装成 404 / ENEEDAUTH，排查成本极高。
+#   所以这里不再做条件判断，一律升级到 latest 并打印实际版本，把不确定性一次性消掉。
 
 name: publish
 
@@ -50,22 +63,15 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      - name: 校验 npm 版本（OIDC Trusted Publisher 需 npm >= 11.5.1）
+      - name: 升级 npm 到 latest（OIDC Trusted Publisher 需 npm >= 11.5.1）
         shell: bash
+        # 无条件升级：Node 24.0.0 只带 npm 11.0.0，低于 11.5.1；
+        # 版本不足的报错会被伪装成 404 / ENEEDAUTH，极难排查，所以不做条件判断。
         run: |
           set -euo pipefail
-          NPM_VERSION="$(npm -v)"
-          echo "当前 npm 版本：${NPM_VERSION}"
-          # Node 24 自带的 npm 已满足 >= 11.5.1，正常情况不会进入升级分支；
-          # 此处仅作兜底，避免 runner 镜像里 npm 过旧导致 OIDC 换 token 失败。
-          LOWEST="$(printf '%s\n11.5.1\n' "${NPM_VERSION}" | sort -V | head -n 1)"
-          if [ "${LOWEST}" != "11.5.1" ]; then
-            echo "npm ${NPM_VERSION} < 11.5.1，升级到 latest 后重试发布"
-            npm i -g npm@latest
-            npm -v
-          else
-            echo "npm 版本满足 OIDC 要求（>= 11.5.1）"
-          fi
+          echo "升级前 npm 版本：$(npm -v)"
+          npm install -g npm@latest
+          echo "升级后 npm 版本：$(npm -v)"
 
       - name: 版本一致性校验（tag 版本 == package.json version）
         if: startsWith(github.ref, 'refs/tags/')
@@ -93,12 +99,20 @@ jobs:
         shell: bash
         run: npm run check:release
 
+      - name: 清除 setup-node 写入的占位 authToken（否则 npm 会跳过 OIDC）
+        shell: bash
+        # registry-url 会写入占位 `_authToken`，存在即抑制 OIDC；必须删掉 token 行但**保留 registry 行**。
+        run: |
+          set -euo pipefail
+          npm config delete //registry.npmjs.org/:_authToken
+          echo "剩余 .npmrc 认证相关配置（应无 _authToken）："
+          npm config list
+
       - name: 发布到 npm（provenance + OIDC）
         shell: bash
-        env:
-          # TP（Trusted Publisher）在 npm 侧配好并跑通 OIDC 后，此 token 可以不再需要；
-          # 现在保留作为回退路径，避免 OIDC 未就绪时整条流水线无法发布。
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # 不注入任何认证 token：.npmrc 中存在 `_authToken` 行会让 npm 跳过 OIDC exchange。
+        # 配好 Trusted Publisher 后 provenance 会自动生成，`--provenance` 可省（保留无害）；
+        # `--access public` 是首发公开包所必需的。
         run: npm publish --provenance --access public
 
       - name: 发布后核验（registry 上的版本与 tarball）
