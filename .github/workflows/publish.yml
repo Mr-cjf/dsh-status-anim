@@ -117,14 +117,33 @@ jobs:
 
       - name: 发布后核验（registry 上的版本与 tarball）
         shell: bash
+        # npm publish 成功后 registry 索引并非立即可查（本仓库实测延迟 4 分 8 秒），
+        # 直接查一次会把传播延迟误报成失败。这里改为轮询：12 次 × 15 秒 ≈ 180 秒上限。
+        # 注意 `2>/dev/null || true`：set -e 下 npm view 的 E404 必须被吞掉，否则脚本直接中断。
+        # 缓存策略选 --prefer-online（而非每轮 npm cache clean --force）：每个 npm view 都强制向
+        # registry 重新校验，既不读陈旧缓存，也不用反复清空整个缓存目录（清缓存对每轮都生效但开销大且会拖慢后续查询）。
+        timeout-minutes: 5
         run: |
           set -euo pipefail
           PKG_NAME="$(node -p "require('./package.json').name")"
           echo "核验 ${PKG_NAME}@${VERSION}"
-          PUBLISHED_VERSION="$(npm view "${PKG_NAME}@${VERSION}" version)"
-          echo "registry version: ${PUBLISHED_VERSION}"
-          echo "registry dist.tarball: $(npm view "${PKG_NAME}@${VERSION}" dist.tarball)"
+          MAX_ATTEMPTS=12
+          SLEEP_SECONDS=15
+          PUBLISHED_VERSION=""
+          for i in $(seq 1 "${MAX_ATTEMPTS}"); do
+            echo "等待 registry 传播 ($i/${MAX_ATTEMPTS})..."
+            PUBLISHED_VERSION="$(npm view "${PKG_NAME}@${VERSION}" version --prefer-online 2>/dev/null || true)"
+            if [ "${PUBLISHED_VERSION}" = "${VERSION}" ]; then
+              echo "registry 已可查到 ${PKG_NAME}@${VERSION}（第 ${i} 轮）"
+              break
+            fi
+            if [ "${i}" -lt "${MAX_ATTEMPTS}" ]; then
+              sleep "${SLEEP_SECONDS}"
+            fi
+          done
+          echo "registry version: ${PUBLISHED_VERSION:-<空>}"
           if [ "${PUBLISHED_VERSION}" != "${VERSION}" ]; then
-            echo "::error::registry 上的版本 ${PUBLISHED_VERSION} 与预期 ${VERSION} 不一致"
+            echo "::error::registry 上未找到 ${PKG_NAME}@${VERSION}（已等待 180 秒）"
             exit 1
           fi
+          echo "registry dist.tarball: $(npm view "${PKG_NAME}@${VERSION}" dist.tarball --prefer-online 2>/dev/null || true)"
