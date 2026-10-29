@@ -5,6 +5,15 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.2.1] - 2026-10-29
+
+### 修复
+
+- 预览区改为**跟随尺寸放大**（`previewSizeFor()`：`clamp(round(size*1.5), 64, 200)`，实测 18→64 / 48→72 / 96→144），此前固定 128px 导致放大尺寸时预览无变化。
+- 修复放大尺寸（如 96px）时动图与对话区后续内容**重叠**：给行祖先链的放行规则改用 `!important`，覆盖宿主 `.root:not([data-expanded])` 的 `contain:size layout` + 固定 24px（特异性 (0,2,0) 高于我们的属性选择器 (0,1,0)）。
+- 修复已结束消息中动作行折叠为 0 高时**动图仍残留并压住正文**：新增 `rowFolded()` 判定，折叠态撤图撤标记。
+- 修复 `rowFolded()` 把宿主 `display:contents` 包装层（不生成盒子、高度恒 0）误判为折叠的回归，此前会导致全部动作行不插图。
+
 ## [0.2.0] - 2026-10-29
 
 > 0.2.0 计划为首个经由 CI/OIDC（GitHub Actions + npm Trusted Publishing）发布的版本，带 provenance 证明；0.1.0 为本地手动发布。
