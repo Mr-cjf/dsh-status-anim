@@ -118,16 +118,17 @@ jobs:
       - name: 发布后核验（registry 上的版本与 tarball）
         shell: bash
         # npm publish 成功后 registry 索引并非立即可查（本仓库实测延迟 4 分 8 秒），
-        # 直接查一次会把传播延迟误报成失败。这里改为轮询：12 次 × 15 秒 ≈ 180 秒上限。
+        # 直接查一次会把传播延迟误报成失败。这里改为轮询：20 次 × 15 秒 ≈ 300 秒上限。
+        # 实测延迟 248 秒，故上限设为 300 秒（旧值 180 秒小于实测延迟，仍会误报）。
         # 注意 `2>/dev/null || true`：set -e 下 npm view 的 E404 必须被吞掉，否则脚本直接中断。
         # 缓存策略选 --prefer-online（而非每轮 npm cache clean --force）：每个 npm view 都强制向
         # registry 重新校验，既不读陈旧缓存，也不用反复清空整个缓存目录（清缓存对每轮都生效但开销大且会拖慢后续查询）。
-        timeout-minutes: 5
+        timeout-minutes: 8
         run: |
           set -euo pipefail
           PKG_NAME="$(node -p "require('./package.json').name")"
           echo "核验 ${PKG_NAME}@${VERSION}"
-          MAX_ATTEMPTS=12
+          MAX_ATTEMPTS=20
           SLEEP_SECONDS=15
           PUBLISHED_VERSION=""
           for i in $(seq 1 "${MAX_ATTEMPTS}"); do
