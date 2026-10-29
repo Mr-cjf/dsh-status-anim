@@ -5,6 +5,22 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.3.0] - 2026-10-29
+
+### 新增
+
+- 插件内置 **12 张默认动图**（animated WebP，2.75MB），装完即有动画，无需手动准备素材。
+- 包内素材与用户素材**合并**：`~/.dsh/status-anim/` 可追加自定义图；同名文件**用户优先**并覆盖包内默认。
+- 新增 `assets/NOTICE.md`，按上游 MIT 许可要求署名：素材取自 GitHub `QCYTSN/dsh-dafeiyu`，本项目做了隔帧抽样、缩放 128px、重新编码为 animated WebP。
+
+### 变更
+
+- npm 包体积 42KB → 2.76MB（包内新增 12 张动图，gzip 对 WebP 无效）。
+
+### 修复
+
+- 新用户不再看到「素材目录为空」。
+
 ## [0.2.3] - 2026-10-29
 
 ### 修复

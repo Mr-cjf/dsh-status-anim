@@ -4,7 +4,7 @@
 **放文件即换图，零重建、零重启。**
 7 类动作各挂各的图：思考、命令、搜索、读写各有专属动图，不再全靠一张随机图。
 
-> 本文对应 **v0.2.3**（包版本以 package.json 为准）
+> 本文对应 **v0.3.0**（包版本以 package.json 为准）
 
 ## 一句话用法
 
@@ -111,6 +111,20 @@ localStorage.setItem('dsh-status-anim.motion', 'force') // 系统开着「减少
 ## 素材来源
 
 默认动图取自 GitHub [`QCYTSN/dsh-dafeiyu`](https://github.com/QCYTSN/dsh-dafeiyu)（**MIT 许可，需署名**）的透明 WebP 帧序列，用 Pillow 合成：412×344 源 → 缩放 128px 宽，~220–230 帧，24fps，562–692KB/个。
+
+## 默认素材（装完即有动画）
+
+安装后**自带 12 张默认动图**，无需任何手动配置即可看到效果：
+
+`head_pat` `waiting` `thinking` `working` `working_search` `eat_token` `working_command` `tail` `success` `error` `poke` `idle`
+
+- 素材随包分发在 `assets/*.webp`（12 个 animated WebP，128×107，合计 2.75 MiB）。
+- 想**追加**：把新图放进 `~/.dsh/status-anim/`，`/status-anim/list` 会把用户素材与默认素材合并返回。
+- 想**覆盖**默认图：在 `~/.dsh/status-anim/` 放**同名**文件即可 —— 同名时用户目录优先，包内默认图不再重复出现。
+- 两处都为空时才返回空列表（此时 client 静默跳过，不影响宿主）。
+
+素材来源：[`QCYTSN/dsh-dafeiyu`](https://github.com/QCYTSN/dsh-dafeiyu)（**MIT 许可，需署名**）。
+逐文件的规格、上游精确路径与 sha256 见 `assets/NOTICE.md`。
 
 ## 安装到 profile
 
