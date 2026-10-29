@@ -5,6 +5,14 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.2.3] - 2026-10-29
+
+### 修复
+
+- 修复状态条动图**显示不完整（被裁切）**：0.2.2 的负 margin 方案使 96px 图上下各溢出容器 37px、被滚动容器裁掉，改用「状态条随图正常撑开（`height: auto`）+ 底部间隙补偿（`margin-bottom: var(--sa-clearance)`，动态测量输入区高度，回退 128px）」。
+- 状态条图改为**非方盒**（`width=size` / `height=auto`），消除 1:1 方盒在 `object-fit: contain` 下的上下留白；实测 96×80.3 与素材 128:107 比例一致。
+- 修复状态行识别的高度上限（60→192，仅当含本插件状态图时放宽），避免撑开后的状态条被 `pruneStrayImages` 误判为非状态行而反复插图/删图。
+
 ## [0.2.2] - 2026-10-29
 
 ### 修复
