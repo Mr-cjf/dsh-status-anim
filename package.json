@@ -1,6 +1,6 @@
 {
   "name": "dsh-status-anim",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "在 DSH Web GUI 的「Deep diving...」状态提示条上插入用户自定义动图（APNG/WebP/PNG）；放文件即换图，零重建零重启",
   "type": "module",
   "main": "lib/index.js",
@@ -16,6 +16,8 @@
   },
   "files": [
     "lib",
+    "assets/*.webp",
+    "assets/NOTICE.md",
     "cordis.patch.yml",
     "README.md"
   ],
